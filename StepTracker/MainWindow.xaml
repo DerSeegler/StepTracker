@@ -1,0 +1,28 @@
+﻿<Window x:Class="StepTracker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:StepTracker"
+        mc:Ignorable="d"
+        Title="StepTracker" Height="120" Width="500" WindowStartupLocation="CenterScreen" MaxHeight="120" MaxWidth="600">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Bottom">
+            <Button x:Name="btnAddManuall" DockPanel.Dock="Right" Width="130" Content="Add Data manually" Margin="5" Click="btnAddManuall_Click" />
+            <Button x:Name="btnAddProfile" DockPanel.Dock="Right" Width="130" Content="Add Profile to View" Margin="5" Click="btnAddProfile_Click" />
+            <Label x:Name="lbProgress" DockPanel.Dock="Left" />
+        </DockPanel>
+        <ProgressBar x:Name="pbProgress" Minimum="0" Maximum="360000">
+            <ProgressBar.Template>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Grid>
+                        <Rectangle Name="PART_Track"   
+                        Fill="#E6E6E6"    
+                        Stretch="Fill"/>
+                        <Image Name="PART_Indicator" Source="Resources\Stock_DDR_steps_by_Nefarious_lover.jpg" HorizontalAlignment="Left" Stretch="None"/>
+                    </Grid>
+                </ControlTemplate>
+            </ProgressBar.Template>
+        </ProgressBar>
+    </DockPanel>
+</Window>
