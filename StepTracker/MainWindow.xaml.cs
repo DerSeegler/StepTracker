@@ -1,4 +1,6 @@
-﻿namespace StepTracker
+﻿using System.Windows.Forms;
+
+namespace StepTracker
 {
     using Classes;
     using System;
@@ -105,7 +107,7 @@
             else
             {
                 MessageBox.Show(
-                    "No profile found. The application will be closed.\r\nMake sure Stepmania 5 is installed and at least one profile exists at \"%appdata%\\StepMania 5\\Save\\LocalProfiles\"",
+                    "No profile found. The application will be closed.\r\nMake sure a Stepmania-Build is installed and at least one profile exists at the configured location.",
                     "No profile found!", MessageBoxButton.OK, MessageBoxImage.Error);
                 this.Close();
             }
@@ -171,14 +173,14 @@
             if (xProfile == null)
             {
                 saveFile.Element("Data").Add(
-                    new XElement("Profile", new XElement[]
-                    {
-                        new XElement("FilePath", path),
-                        new XElement("LastSessionCount", "0"),
-                        new XElement("LastGameplaySecondsCount", "0"),
-                        new XElement("TotalGameplaySeconds", "0"),
-                        new XElement("Sessions")
-                    })
+                        new XElement("Profile", new XElement[]
+                        {
+                            new XElement("FilePath", path),
+                            new XElement("LastSessionCount", "0"),
+                            new XElement("LastGameplaySecondsCount", "0"),
+                            new XElement("TotalGameplaySeconds", "0"),
+                            new XElement("Sessions")
+                        })
                     );
 
                 saveFile.Save(MainWindow.SaveFilePath);
@@ -198,10 +200,38 @@
         /// <returns></returns>
         private string SelectProfile()
         {
-            string localProfilesPath = Path.Combine(this.appDataPath, "StepMania 5", "Save", "LocalProfiles");
+            XDocument saveFile = XDocument.Load(MainWindow.SaveFilePath);
+            XElement xProgram = saveFile.Element("Data").Element("Program");
+            if (xProgram == null)
+            {
+                saveFile.Element("Data").Add(new XElement("Program"));
+                saveFile.Save(MainWindow.SaveFilePath);
+            }
+
+            XElement xProfilePath = saveFile.Element("Data").Element("Program").Element("ProfilePath");
+            if (xProfilePath == null)
+            {
+                saveFile.Element("Data").Element("Program").Add(new XElement("ProfilePath", Path.Combine(this.appDataPath, "StepMania 5", "Save", "LocalProfiles")));
+                saveFile.Save(MainWindow.SaveFilePath);
+
+                xProfilePath = saveFile.Element("Data").Element("Program").Element("ProfilePath");
+            }
+
+            string localProfilesPath = xProfilePath.Value;
             if (Directory.Exists(localProfilesPath))
             {
-                string[] files = Directory.GetFiles(localProfilesPath, "Stats.xml", SearchOption.AllDirectories);
+                string[] files = null;
+                try
+                {
+                    files = Directory.GetFiles(localProfilesPath, "Stats.xml", SearchOption.AllDirectories);
+                }
+                catch
+                {
+                    xProfilePath.Value = Path.Combine(this.appDataPath, "StepMania 5", "Save", "LocalProfiles");
+                    saveFile.Save(MainWindow.SaveFilePath);
+                    return this.SelectProfile();
+                }
+
                 if (files.Length > 0)
                 {
                     Dictionary<string, string> possibleProfiles = new Dictionary<string, string>();
@@ -230,6 +260,24 @@
                             return possibleProfiles.First().Key;
                         }
                     }
+                }
+            }
+
+            MessageBoxResult dialogResult =
+                MessageBox.Show(
+                    "No profile found at the usual location.\r\nDo you want to select the correct location?\r\nThe last two folder usually are \"\\Save\\LocalProfiles\".",
+                    "No profile found",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+            if (dialogResult == MessageBoxResult.Yes)
+            {
+                FolderBrowserDialog folderBrowserDialog1 = new FolderBrowserDialog();
+                if (folderBrowserDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    string folderPath = folderBrowserDialog1.SelectedPath;
+                    xProfilePath.Value = folderPath;
+                    saveFile.Save(MainWindow.SaveFilePath);
+                    return this.SelectProfile();
                 }
             }
 
